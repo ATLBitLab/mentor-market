@@ -1,12 +1,17 @@
 "use client"
-import { generatePrivateKey, getPublicKey, validateEvent, verifySignature, getSignature, getEventHash, signEvent, getBlankEvent, finishEvent } from 'nostr-tools'
+import { generatePrivateKey, getPublicKey, getBlankEvent, finishEvent, relayInit } from 'nostr-tools'
 import { useState, useEffect } from 'react'
-import type { Event, EventTemplate, UnsignedEvent } from 'nostr-tools'
+import type { Event, Relay } from 'nostr-tools'
+
+function connectToRelay(relay:Relay){
+  relay.connect()
+}
 
 export default function Home() {
   const [sk, setSk] = useState<string | null>('')
   const [pk, setPk] = useState<string | null>('')
   const [eventContent, setEventContent] = useState<string>('')
+  const [relayUri, setRelayUri] =  useState<string>('wss://relay.damus.io')  
   
   useEffect(() => {
     if( [null,''].includes(localStorage.getItem('sk')) ) {
@@ -26,7 +31,37 @@ export default function Home() {
         console.log(event3)
       }
     }
+
+    let relay = relayInit(relayUri)
+
+    relay.on('connect', () => {
+      console.log(`Connected to relay ${relay.url}`)
+    })
+
+    relay.on('error', ()=>{
+      console.log(`Error connecting to relay ${relay.url}`)
+    })
+
+    relay.connect().then(()=>{
+      let sub = relay.sub([
+        {
+          ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'],
+        },
+      ])
+
+      sub.on('event', event => {
+        console.log('we got the event we wanted:', event)
+      })
+
+      sub.on('eose', () => {
+        sub.unsub()
+      })
+
+      
+    })
   }, [])
+
+  
 
   function createKeys(){
     let secretKey = generatePrivateKey()
@@ -39,8 +74,6 @@ export default function Home() {
     localStorage.setItem('pk', publicKey)
   }
 
-  
-
   function createEvent(content: string, sk:string, kind:number = 1, created_at:number = Math.floor(Date.now() / 1000)):Event{
     let eventTemp = getBlankEvent(kind)
     eventTemp.content = content
@@ -50,6 +83,7 @@ export default function Home() {
     return event;
   }
 
+  
 
   return (
     <main>
@@ -64,17 +98,18 @@ export default function Home() {
             Make Event
           </button>
         </form>
+
+        <h2>Edit Relay</h2>
+
+        <form>
+          <input type="text" placeholder="Relay" value={relayUri} onChange={(e)=>setRelayUri(e.target.value)} />
+        </form>
       </>
       :
       <>
         Generating keys&hellip;
       </>
       }
-
-      
-
-      
-
 
     </main>
   )
