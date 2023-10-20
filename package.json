@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@noble/secp256k1": "^2.0.0",
+    "crypto": "^1.0.1",
     "next": "13.5.4",
     "nostr-tools": "^1.16.0",
     "react": "^18",

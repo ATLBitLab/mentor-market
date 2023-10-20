@@ -2,6 +2,9 @@
 import { generatePrivateKey, getPublicKey, getBlankEvent, finishEvent, relayInit } from 'nostr-tools'
 import { useState, useEffect } from 'react'
 import type { Event, Relay } from 'nostr-tools'
+import crypto from 'crypto'
+import * as secp from '@noble/secp256k1'
+import { Noto_Sans_Tangsa } from 'next/font/google'
 
 function connectToRelay(relay:Relay){
   relay.connect()
@@ -13,6 +16,8 @@ export default function Home() {
   const [eventContent, setEventContent] = useState<string>('')
   const [relayUri, setRelayUri] =  useState<string>('wss://relay.damus.io')
   const [relay, setRelay] = useState<Relay | null>(null)
+  const [dmEventContent, setDmEventContent] = useState<string>('')
+  const [dmTarget, setDmTarget] = useState<string>('99894d7779521334cb49913e23381e196a1bb10e5be3eded8e1e9e0803fd866d')
   
   useEffect(() => {
     if( [null,''].includes(localStorage.getItem('sk')) ) {
@@ -44,45 +49,6 @@ export default function Home() {
     })
 
     relay.connect().then(()=>{setRelay(relay)})
-      let sub = relay.sub([
-        {
-          ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'],
-        },
-      ])
-
-      sub.on('event', event => {
-        console.log('we got the event we wanted:', event)
-      })
-
-      sub.on('eose', () => {
-        sub.unsub()
-      })
-
-      // Create event, send, and subscribe to see it
-      sub = relay.sub([
-        {
-          kinds: [1],
-          authors: [pk?.toString() || ''],
-        },
-      ])
-
-      sub.on('event', event => {
-        console.log('got event:', event)
-      })
-
-      let newEvent = createEvent('Hello World! This is a test event from a humble nostr dev.', sk || '')
-
-      relay.publish(newEvent).then(() => {
-        console.log('event published')
-        let events = relay.list([{kinds: [0,1]}])
-        console.log(events)
-        let event = relay.get({
-          ids: [newEvent.id],
-        })
-        console.log(event)
-      })
-
-
   }, [])
 
   
@@ -98,33 +64,19 @@ export default function Home() {
     localStorage.setItem('pk', publicKey)
   }
 
-  function createEvent(content: string, sk:string, kind:number = 1, created_at:number = Math.floor(Date.now() / 1000)):Event{
+  function createEvent(content: string, sk:string, kind:number = 1, created_at:number = Math.floor(Date.now() / 1000), tags:any[] = []):Event{
     let eventTemp = getBlankEvent(kind)
     eventTemp.content = content
     eventTemp.created_at = created_at
+    if(tags) eventTemp.tags = tags
+    console.log('eventTemp', eventTemp)
     let event = finishEvent(eventTemp, sk || '')
     console.log(event)
     return event;
   }
 
-  function broadcastAndCreateEvent(content: string, sk:string, kind:number = 1, created_at:number = Math.floor(Date.now() / 1000)){
-    let event = createEvent(content, sk, kind, created_at)
-
-
-
-    //   let sub = relay.sub([
-    //     {
-    //       ids: ['d7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027'],
-    //     },
-    //   ])
-
-    //   sub.on('event', event => {
-    //     console.log('we got the event we wanted:', event)
-    //   })
-
-    //   sub.on('eose', () => {
-    //     sub.unsub()
-    //   })
+  function broadcastAndCreateEvent(content: string, sk:string, kind:number = 1, created_at:number = Math.floor(Date.now() / 1000), tags:any[] = []){
+    let event = createEvent(content, sk, kind, created_at, tags)
 
     if(relay) {
       // Create event, send, and subscribe to see it
@@ -149,6 +101,23 @@ export default function Home() {
         console.log(event)
       })
     }
+  }
+
+  function sendDm(content: string, sk:string, created_at:number = Math.floor(Date.now() / 1000)){
+    console.log(pk?.toString() || '', '02' + dmTarget)
+    let sharedPoint = secp.getSharedSecret(pk?.toString() || '', '02' + dmTarget)
+    let sharedX = sharedPoint.slice(1, 33)
+    let iv = crypto.randomFillSync(new Uint8Array(16))
+    var cipher = crypto.createCipheriv(
+      'aes-256-cbc',
+      Buffer.from(sharedX),
+      iv
+    )
+    let encryptedMessage = cipher.update(content, 'utf8', 'base64')
+    encryptedMessage += cipher.final('base64')
+    let ivBase64 = Buffer.from(iv.buffer).toString('base64')
+
+    broadcastAndCreateEvent(encryptedMessage + '?iv=' + ivBase64, sk, 4, Math.floor(Date.now() / 1000), [['p', dmTarget]])
   }
   
 
@@ -179,6 +148,14 @@ export default function Home() {
             <button type="button" onClick={()=>broadcastAndCreateEvent(eventContent, sk)}>
               Broadcast
             </button>
+
+            <form className="border p-8 m-8">
+              <h2>Send DM</h2>
+              <input type="text" placeholder="Slide into the DMs" value={dmEventContent} onChange={(e)=>setDmEventContent(e.target.value)} className="border p-2" />
+              <button type="button" onClick={()=>sendDm(dmEventContent, sk)}>
+                Send DM
+              </button>
+            </form>
           </>
         :
           <>
