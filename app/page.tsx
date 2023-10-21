@@ -1,5 +1,5 @@
 "use client"
-import { generatePrivateKey, getPublicKey, getBlankEvent, finishEvent, relayInit } from 'nostr-tools'
+import { generatePrivateKey, getPublicKey, getBlankEvent, finishEvent, relayInit, nip44 } from 'nostr-tools'
 import { useState, useEffect } from 'react'
 import type { Event, Relay } from 'nostr-tools'
 import crypto from 'crypto'
@@ -120,6 +120,37 @@ export default function Home() {
     broadcastAndCreateEvent(encryptedMessage + '?iv=' + ivBase64, sk, 4, Math.floor(Date.now() / 1000), [['p', dmTarget]])
   }
   
+  function sendNip44DM(content: string, sk:string, recipient:string, created_at:number = Math.floor(Date.now() / 1000)){
+    let sk2 = generatePrivateKey()
+    let pk2 = getPublicKey(sk2)
+
+
+    let key = nip44.getSharedSecret(sk, pk2)
+    let cipherText = nip44.encrypt(key, content)
+
+    broadcastAndCreateEvent(cipherText, sk, 4, Math.floor(Date.now() / 1000), [['p', pk2]])
+
+    if(relay) {
+      // on the receiver side
+      let sub = relay.sub([
+        {
+          kinds: [4],
+          authors: [pk?.toString() || ''],
+        },
+      ])
+
+      sub.on('event', async event => {
+        console.log('got DM event:', event)
+        let sender = event.pubkey
+        // pk1 === sender
+        let _key = nip44.getSharedSecret(sk2, pk?.toString() || '')
+        let plaintext = nip44.decrypt(_key, event.content)
+        console.log(plaintext)
+      })
+    }
+    
+  }
+  
 
   return (
     <main>
@@ -152,7 +183,7 @@ export default function Home() {
             <form className="border p-8 m-8">
               <h2>Send DM</h2>
               <input type="text" placeholder="Slide into the DMs" value={dmEventContent} onChange={(e)=>setDmEventContent(e.target.value)} className="border p-2" />
-              <button type="button" onClick={()=>sendDm(dmEventContent, sk)}>
+              <button type="button" onClick={()=>sendNip44DM(dmEventContent, sk, dmTarget)}>
                 Send DM
               </button>
             </form>
