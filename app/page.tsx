@@ -1,113 +1,205 @@
-import Image from 'next/image'
+"use client"
+import { generatePrivateKey, getPublicKey, getBlankEvent, finishEvent, relayInit, nip44 } from 'nostr-tools'
+import { useState, useEffect } from 'react'
+import type { Event, Relay } from 'nostr-tools'
+import crypto from 'crypto'
+import * as secp from '@noble/secp256k1'
+import { Noto_Sans_Tangsa } from 'next/font/google'
+
+function connectToRelay(relay:Relay){
+  relay.connect()
+}
 
 export default function Home() {
+  const [sk, setSk] = useState<string | null>('')
+  const [pk, setPk] = useState<string | null>('')
+  const [eventContent, setEventContent] = useState<string>('')
+  const [relayUri, setRelayUri] =  useState<string>('wss://relay.damus.io')
+  const [relay, setRelay] = useState<Relay | null>(null)
+  const [dmEventContent, setDmEventContent] = useState<string>('')
+  const [dmTarget, setDmTarget] = useState<string>('99894d7779521334cb49913e23381e196a1bb10e5be3eded8e1e9e0803fd866d')
+  
+  useEffect(() => {
+    if( [null,''].includes(localStorage.getItem('sk')) ) {
+      createKeys();
+    }
+    else {
+      setSk(localStorage.getItem('sk'))
+      setPk(localStorage.getItem('pk'))
+
+      if(sk){
+        // Testing event creation
+        let event1 = createEvent('Hello World 1', sk)
+        let event2 = createEvent('Hello World 2', sk)
+        let event3 = createEvent('Hello World 3', sk)
+        console.log(event1)
+        console.log(event2)
+        console.log(event3)
+      }
+    }
+
+    let relay = relayInit(relayUri)
+
+    relay.on('connect', () => {
+      console.log(`Connected to relay ${relay.url}`)
+    })
+
+    relay.on('error', ()=>{
+      console.log(`Error connecting to relay ${relay.url}`)
+    })
+
+    relay.connect().then(()=>{setRelay(relay)})
+  }, [])
+
+  
+
+  function createKeys(){
+    let secretKey = generatePrivateKey()
+    let publicKey = getPublicKey(secretKey)
+    setSk(secretKey)
+    setPk(publicKey)
+    console.log(secretKey)
+    console.log(publicKey)
+    localStorage.setItem('sk', secretKey)
+    localStorage.setItem('pk', publicKey)
+  }
+
+  function createEvent(content: string, sk:string, kind:number = 1, created_at:number = Math.floor(Date.now() / 1000), tags:any[] = []):Event{
+    let eventTemp = getBlankEvent(kind)
+    eventTemp.content = content
+    eventTemp.created_at = created_at
+    if(tags) eventTemp.tags = tags
+    console.log('eventTemp', eventTemp)
+    let event = finishEvent(eventTemp, sk || '')
+    console.log(event)
+    return event;
+  }
+
+  function broadcastAndCreateEvent(content: string, sk:string, kind:number = 1, created_at:number = Math.floor(Date.now() / 1000), tags:any[] = []){
+    let event = createEvent(content, sk, kind, created_at, tags)
+
+    if(relay) {
+      // Create event, send, and subscribe to see it
+      let sub = relay.sub([
+        {
+          kinds: [1],
+          authors: [pk?.toString() || ''],
+        },
+      ])
+
+      sub.on('event', event => {
+        console.log('got event:', event)
+      })
+
+      relay.publish(event).then(() => {
+        console.log('event published')
+        let events = relay.list([{kinds: [0,1]}])
+        console.log(events)
+        let checkEvent = relay.get({
+          ids: [event.id],
+        })
+        console.log(event)
+      })
+    }
+  }
+
+  function sendDm(content: string, sk:string, created_at:number = Math.floor(Date.now() / 1000)){
+    console.log(pk?.toString() || '', '02' + dmTarget)
+    let sharedPoint = secp.getSharedSecret(pk?.toString() || '', '02' + dmTarget)
+    let sharedX = sharedPoint.slice(1, 33)
+    let iv = crypto.randomFillSync(new Uint8Array(16))
+    var cipher = crypto.createCipheriv(
+      'aes-256-cbc',
+      Buffer.from(sharedX),
+      iv
+    )
+    let encryptedMessage = cipher.update(content, 'utf8', 'base64')
+    encryptedMessage += cipher.final('base64')
+    let ivBase64 = Buffer.from(iv.buffer).toString('base64')
+
+    broadcastAndCreateEvent(encryptedMessage + '?iv=' + ivBase64, sk, 4, Math.floor(Date.now() / 1000), [['p', dmTarget]])
+  }
+  
+  function sendNip44DM(content: string, sk:string, recipient:string, created_at:number = Math.floor(Date.now() / 1000)){
+    let sk2 = generatePrivateKey()
+    let pk2 = getPublicKey(sk2)
+
+
+    let key = nip44.getSharedSecret(sk, pk2)
+    let cipherText = nip44.encrypt(key, content)
+
+    broadcastAndCreateEvent(cipherText, sk, 4, Math.floor(Date.now() / 1000), [['p', pk2]])
+
+    if(relay) {
+      // on the receiver side
+      let sub = relay.sub([
+        {
+          kinds: [4],
+          authors: [pk?.toString() || ''],
+        },
+      ])
+
+      sub.on('event', async event => {
+        console.log('got DM event:', event)
+        let sender = event.pubkey
+        // pk1 === sender
+        let _key = nip44.getSharedSecret(sk2, pk?.toString() || '')
+        let plaintext = nip44.decrypt(_key, event.content)
+        console.log(plaintext)
+      })
+    }
+    
+  }
+  
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <main>
+      {sk && pk ?
+      <>
+        <h1>Welcome back to Nostr!</h1>
+        <h2>Make an Event</h2>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+        <form>
+          <input type="text" placeholder="Event Content" value={eventContent} onChange={(e)=>setEventContent(e.target.value)} />
+          <button type="button" onClick={()=>createEvent(eventContent, sk)}>
+            Make Event
+          </button>
+        </form>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+        <h2>Edit Relay</h2>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+        <form>
+          <input type="text" placeholder="Relay" value={relayUri} onChange={(e)=>setRelayUri(e.target.value)} />
+        </form>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
+        {relay ?
+          <>
+            Relay connected
+            <h2>Broadcast Event</h2>
+            <button type="button" onClick={()=>broadcastAndCreateEvent(eventContent, sk)}>
+              Broadcast
+            </button>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+            <form className="border p-8 m-8">
+              <h2>Send DM</h2>
+              <input type="text" placeholder="Slide into the DMs" value={dmEventContent} onChange={(e)=>setDmEventContent(e.target.value)} className="border p-2" />
+              <button type="button" onClick={()=>sendNip44DM(dmEventContent, sk, dmTarget)}>
+                Send DM
+              </button>
+            </form>
+          </>
+        :
+          <>
+            No relay connect
+          </>
+        } 
+      </>
+      :
+      <>
+        Generating keys&hellip;
+      </>
+      }
+
     </main>
   )
 }
