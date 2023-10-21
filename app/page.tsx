@@ -6,6 +6,12 @@ import crypto from 'crypto'
 import * as secp from '@noble/secp256k1'
 import { Noto_Sans_Tangsa } from 'next/font/google'
 
+interface Window {
+  nostr?: {
+    getPublicKey: () => void;
+  }
+}
+
 function connectToRelay(relay:Relay){
   relay.connect()
 }
@@ -18,6 +24,9 @@ export default function Home() {
   const [relay, setRelay] = useState<Relay | null>(null)
   const [dmEventContent, setDmEventContent] = useState<string>('')
   const [dmTarget, setDmTarget] = useState<string>('99894d7779521334cb49913e23381e196a1bb10e5be3eded8e1e9e0803fd866d')
+  const [userPubKey, setUserPubKey] = useState<string>('')
+  const [userName, setUserName] = useState<string>('')
+  const [userAvatar, setUserAvatar] = useState<string>('')
   
   useEffect(() => {
     if( [null,''].includes(localStorage.getItem('sk')) ) {
@@ -150,7 +159,38 @@ export default function Home() {
     }
     
   }
+
   
+  
+  function loginWithNip7(){
+    console.log('nostr nip7');
+    if(window && (window as any).nostr) {
+      (window as any).nostr.getPublicKey().then((pubKey:string)=>{
+        console.log(pubKey)
+        setUserPubKey(pubKey)
+
+        // Get profile data
+        if(relay){
+          let sub = relay.sub([
+            {
+              kinds: [0],
+              authors: [pubKey],
+            },
+          ])
+    
+          sub.on('event', event => {
+            console.log('got event:', event)
+            let profile = JSON.parse(event.content)
+            console.log(profile)
+            setUserName(profile.name)
+            setUserAvatar(profile.picture)
+          })
+        }
+      })
+    }
+
+    
+  }
 
   return (
     <main>
@@ -187,6 +227,16 @@ export default function Home() {
                 Send DM
               </button>
             </form>
+
+            <h2>Login to Site</h2>
+            <br />
+            <button type="button" onClick={()=>loginWithNip7()}>
+              Login with Nostr
+            </button>
+
+            {userName ? <h3>{userName}</h3> : <p>Login to use this service</p>}
+            {userAvatar ? <h3><img src={userAvatar} alt={userAvatar} className="w-24 h-24 rounded-full" /></h3> : <></>}
+
           </>
         :
           <>
