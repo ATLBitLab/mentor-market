@@ -26,15 +26,8 @@ export const useUserDataStore = create<UserDataStore>()(
     )
 )
 
-
 interface LayoutProps {
     children: React.ReactNode
-}
-
-interface UserData {
-    npub: string | null;
-    name?: string;
-    avatar?: string;
 }
 
 export default function Layout(props:LayoutProps){
