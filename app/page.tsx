@@ -1,10 +1,11 @@
 "use client"
 import { generatePrivateKey, getPublicKey, getBlankEvent, finishEvent, relayInit, nip44 } from 'nostr-tools'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import type { Event, Relay } from 'nostr-tools'
 import crypto from 'crypto'
 import * as secp from '@noble/secp256k1'
 import { Noto_Sans_Tangsa } from 'next/font/google'
+import { useUserDataStore } from '@/components/Layout'
 
 interface Window {
   nostr?: {
@@ -17,6 +18,8 @@ function connectToRelay(relay:Relay){
 }
 
 export default function Home() {
+  // let {userData} = useContext(UserContext)
+
   const [sk, setSk] = useState<string | null>('')
   const [pk, setPk] = useState<string | null>('')
   const [eventContent, setEventContent] = useState<string>('')
@@ -27,6 +30,7 @@ export default function Home() {
   const [userPubKey, setUserPubKey] = useState<string>('')
   const [userName, setUserName] = useState<string>('')
   const [userAvatar, setUserAvatar] = useState<string>('')
+  const userDataStore = useUserDataStore()
   
   useEffect(() => {
     if( [null,''].includes(localStorage.getItem('sk')) ) {
@@ -236,6 +240,12 @@ export default function Home() {
 
             {userName ? <h3>{userName}</h3> : <p>Login to use this service</p>}
             {userAvatar ? <h3><img src={userAvatar} alt={userAvatar} className="w-24 h-24 rounded-full" /></h3> : <></>}
+
+
+
+            <hr />
+
+            {userDataStore && userDataStore.npub ? userDataStore.npub : 'no npub'}
 
           </>
         :
