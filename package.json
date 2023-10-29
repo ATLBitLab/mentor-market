@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@bitcoin-design/bitcoin-icons-react": "^0.1.10",
     "@noble/secp256k1": "^2.0.0",
     "crypto": "^1.0.1",
     "next": "13.5.4",

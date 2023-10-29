@@ -1,12 +1,14 @@
+import Input from "@/components/Input"
+
 export default function NewLesson(){
     return(
         <>
             {/* Lesson Input Form */}
-            <form>
-                <input type="text" placeholder="Lesson Title" />
-                <textarea placeholder="Lesson Description" />
-                <input type="upload" placeholder="Lesson Image" />
-                <input type="submit" value="Post Lesson" />
+            <form className="flex flex-col gap-4">
+                <Input placeholder="Give a title to your lesson" />
+                <Input type="textarea" placeholder="Describe your lesson in about 50 words." />
+                <Input type="upload" value="Add an Image" />
+                <Input type="submit" value="Post Lesson" />
             </form>
         </>
     )

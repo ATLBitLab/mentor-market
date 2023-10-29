@@ -5,6 +5,9 @@ import { useEffect, useState } from "react"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { initRelay } from "@/lib/nostr"
+import Image from "next/image"
+import mentorMarketIcon from "../public/mentor-market-icon.jpg"
+import MenuIcon from "@bitcoin-design/bitcoin-icons-react/filled/MenuIcon"
 
 interface UserDataStore {
     npub: string | null;
@@ -40,10 +43,26 @@ interface LayoutProps {
 export default function Layout(props:LayoutProps){
     const userDataStore = useUserDataStore()
     const [isClient, setIsClient] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+
+    const menuItems = [
+        {
+            name: "Lessons",
+            href: "/"
+        },
+        {
+            name: "Create Lesson",
+            href: "/lesson/new"
+        }
+    ]
 
     useEffect(() => {
         setIsClient(true);
     }, [])
+
+    useEffect(() => {
+        console.log('menuOpen is ', menuOpen)
+    }, [menuOpen])
 
     function logout(){
         console.log('logging out')
@@ -86,35 +105,51 @@ export default function Layout(props:LayoutProps){
 
     return(
             <div>
-                <header className="w-full p-4 border-b flex flex-row justify-between">
-                    <Link href="/">Mentor Market</Link>
-                    <nav className="flex flex-row gap-2">
-                    <ul>
-                        <li>
-                        <Link href="/">Lessons</Link>
-                        </li>
-                    </ul>
-                    <div>
-                        {isClient && (userDataStore && userDataStore.npub ?
-                        <>
-                            Welcome, {userDataStore.name}
-                            <img src={userDataStore.avatar} className="w-8 h-8 rounded-full" />
-                            {userDataStore.npub}
-                        </>
-                        :
-                        <>  
-                            <Button onClick={loginWithNip7}>
-                                Login
-                            </Button>
-                        </>
-                        )}
-                        <Button onClick={logout}>
-                            Logout
+                <header className="w-full bg-white border-b border-gray-200 flex flex-row max-lg:flex-wrap lg:justify-between sticky z-50">
+                    <div className="max-lg:w-full flex flex-row justify-between p-4">
+                        <div className="flex flex-row gap-2 items-center">
+                            <Image src={mentorMarketIcon} alt="" width={80} className="w-8 h-8"  />
+                            <Link href="/" className="font-medium text-sky-800 sr-only md:not-sr-only">Mentor Market</Link>
+                        </div>
+                        <Button className="lg:hidden" onClick={()=> {setMenuOpen(!menuOpen)}}>
+                            <MenuIcon className="w-6 h-6" />
+                            <span className="sr-only" aria-hidden>Show Menu</span>
                         </Button>
                     </div>
+
+                    <nav className={"max-lg:w-full flex flex-col-reverse lg:flex-row gap-2 max-lg:border-t border-gray-200" + (!menuOpen && " max-lg:hidden")}>
+                        <ul className="max-lg:w-full flex flex-col lg:flex-row lg:gap-2 items-center">
+                            {menuItems.map((item, index) => (
+                                <li key={index} className="max-lg:w-full">
+                                    <Link href={item.href} className="p-4 max-lg:border-b border-gray-200 block" onClick={()=>{setMenuOpen(false)}}>
+                                        {item.name}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                        <div>
+                            {isClient && (userDataStore && userDataStore.npub ?
+                                <div className="p-4 flex flex-row gap-2 items-center w-full justify-end max-lg:border-b border-gray-200 lg:text-sm">
+                                    <span className="lg:sr-only">Welcome,</span> <span className="font-semibold">{userDataStore.name}</span>
+                                    <img src={userDataStore.avatar} className="w-8 h-8 rounded-full" />
+                                    <Button onClick={logout}>
+                                        Logout
+                                    </Button>
+                                </div>
+                            :
+                                <div className="p-4 flex flex-row gap-2 items-center w-full justify-end border-b border-gray-200"> 
+                                    <Button onClick={loginWithNip7}>
+                                        Login
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </nav>
                 </header>
-                {props.children}
+                <main className="p-4">
+                    {props.children}
+                </main>
+                <div className={"bg-gray-900/50 w-full h-full absolute top-0 left-0 z-40" + (!menuOpen && " hidden")} onClick={()=>{setMenuOpen(false)}}></div>
             </div>
     )
 }
