@@ -5,6 +5,7 @@ import { useUserDataStore } from '@/components/Layout'
 import type { Event } from "nostr-tools"
 import { useState, useEffect } from "react"
 import Button from "@/components/Button"
+import type { Lesson } from "@/types/lesson"
 
 export default function NewLesson(){
     const defaultLesson:Lesson = {
@@ -25,12 +26,7 @@ export default function NewLesson(){
         console.log(lessonTitle, lessonDescription, lessonPrice, lessonImage)
     }, [lessonTitle, lessonDescription, lessonPrice, lessonImage])
 
-    type Lesson = {
-        title: string;
-        description: string;
-        imageUrl?: string;
-        price: number;
-    }    
+  
 
     function handlePostLessonClick(){
         let unsignedEvent = createUnsignedEvent(JSON.stringify({title: lessonTitle, description: lessonDescription, price: lessonPrice, imageUrl: lessonImage}))
