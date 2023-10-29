@@ -4,7 +4,7 @@ interface InputProps {
     type?: "text" | "textarea" | "upload" | "submit" | "number"
     placeholder?: string
     value?: string | number
-    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>|React.ChangeEvent<HTMLTextAreaElement>) => void
     label?: string
 }
 
@@ -16,6 +16,7 @@ export default function Input(props: InputProps){
                 <textarea
                     placeholder={props.placeholder}
                     value={props.value}
+                    onChange={props.onChange}
                     className="p-2 border border-gray-300 w-full"
                 />
             </div>
