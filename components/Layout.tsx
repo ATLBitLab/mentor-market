@@ -74,7 +74,7 @@ export default function Layout(props:LayoutProps){
             (window as any).nostr.getPublicKey().then((pubKey:string)=>{
                 userDataStore.setNpub(pubKey)
 
-                let relay = initRelay().then((relay)=>{
+                let relay = initRelay('wss://relay.damus.io').then((relay)=>{
                     console.log(relay)
                     // Get profile data
                 if(relay){
