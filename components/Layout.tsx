@@ -60,10 +60,6 @@ export default function Layout(props:LayoutProps){
         setIsClient(true);
     }, [])
 
-    useEffect(() => {
-        console.log('menuOpen is ', menuOpen)
-    }, [menuOpen])
-
     function logout(){
         console.log('logging out')
         userDataStore.logout()
