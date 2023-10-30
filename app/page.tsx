@@ -52,15 +52,15 @@ export default function Home() {
             <Button>Login Here</Button>
           }
 
-          <h2 className="text-pink-600">Popular Lessons</h2>
+          {/* <h2 className="text-pink-600">Popular Lessons</h2>
 
           <p><em>Popular lessons will go here</em></p>
 
           <h2 className="text-pink-600">Popular Mentors</h2>
 
-          <p><em>Popular mentors will go here</em></p>
+          <p><em>Popular mentors will go here</em></p> */}
           
-          <h2 className="text-pink-600">All Lessons</h2>
+          <h2 className="text-pink-600">Available Lessons</h2>
           {!lessons.length ?
             <>
               <LessonCard />
