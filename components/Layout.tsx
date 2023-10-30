@@ -104,7 +104,9 @@ export default function Layout(props:LayoutProps){
                 <header className="w-full bg-white border-b border-gray-200 flex flex-row max-lg:flex-wrap lg:justify-between sticky z-50">
                     <div className="max-lg:w-full flex flex-row justify-between p-4">
                         <div className="flex flex-row gap-2 items-center">
-                            <Image src={mentorMarketIcon} alt="" width={80} className="w-8 h-8"  />
+                            <Link href={"/"}>
+                                <Image src={mentorMarketIcon} alt="" width={80} className="w-8 h-8"  />
+                            </Link>
                             <Link href="/" className="font-medium text-sky-800 sr-only md:not-sr-only">Mentor Market</Link>
                         </div>
                         <Button className="lg:hidden" onClick={()=> {setMenuOpen(!menuOpen)}}>
