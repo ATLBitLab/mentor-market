@@ -67,3 +67,27 @@ export function extractProfileFromEvent(event:Event):Object|null{
     return null
   }
 }
+
+export async function getInstructor(pubkey:string):Promise<Object>{
+  let profile ={}
+  initRelay('wss://relay.damus.io').then((relay) => {
+      if(relay) {
+        let sub = relay.sub([
+          {
+            kinds: [0],
+            authors: [pubkey]
+          },
+        ])
+
+        sub.on('event', event => {
+            let profile = extractProfileFromEvent(event)
+        })
+
+        sub.on('eose', () => {
+            sub.unsub()
+        })
+        return profile
+      }
+  })
+  return profile
+}

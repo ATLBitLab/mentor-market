@@ -70,6 +70,10 @@ export default function LessonPage({params}: {params: {noteId: string}}){
         })
     }
 
+    function dmInstructor(){
+        console.log('dm instructor')
+    }
+
     if(lesson) {
         return(
             <>
@@ -78,7 +82,7 @@ export default function LessonPage({params}: {params: {noteId: string}}){
                     <h1>{lesson.title}</h1>
                     <p className="text-xl">{lesson.price} <span className="text-lg">sats</span></p>
                     <p>{lesson.description}</p>
-                    <Button>Apply for Lesson</Button>
+                    <Button onClick={()=>{dmInstructor()}}>Apply for Lesson</Button>
                 </div>
                 <div className="flex flex-col gap-2 p-4 border border-gray-200 rounded-md">
                     <p className="text-lg font-medium">Instructor</p>
