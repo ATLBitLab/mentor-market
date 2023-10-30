@@ -6,6 +6,15 @@ import type { Event } from "nostr-tools"
 import { useState, useEffect } from "react"
 import Button from "@/components/Button"
 import type { Lesson } from "@/types/lesson"
+import misc from  "@/public/lesson-cat-misc.jpg"
+import cooking from  "@/public/lesson-cat-cooking.jpg"
+import code from "@/public/lesson-cat-code.jpg"
+import fitness from "@/public/lesson-cat-fitness.jpg"
+import science from "@/public/lesson-cat-science.jpg"
+import art from "@/public/lesson-cat-art.jpg"
+import Image from "next/image"
+import Category from "@/components/Category"
+import type { StaticImageData } from "next/image"
 
 export default function NewLesson(){
     const defaultLesson:Lesson = {
@@ -15,12 +24,52 @@ export default function NewLesson(){
         price: 21000
     }
 
+    type category = {
+        name: string,
+        slug: "misc"|"cooking"|"code"|"fitness"|"science"|"art",
+        image: StaticImageData
+    }
+
+    const categories:category[] = [
+        {
+            name: "Miscellaneous",
+            slug: "misc",
+            image: misc
+        },
+        {
+            name: "Art & Design",
+            slug: "art",
+            image: art
+        },
+        {
+            name: "Code",
+            slug: "code",
+            image: code
+        },
+        {
+            name: "Cooking",
+            slug: "cooking",
+            image: cooking
+        },
+        {
+            name: "Fitness",
+            slug: "fitness",
+            image: fitness
+        },
+        {
+            name: "Math & Science",
+            slug: "science",
+            image: science
+        },
+    ]
+
     const userDataStore = useUserDataStore()
     const [publishedLesson, setPublishedLesson] = useState<Event | null>(null)
     const [lessonTitle, setLessonTitle] = useState<string>(defaultLesson.title)
     const [lessonDescription, setLessonDescription] = useState<string>(defaultLesson.description)
     const [lessonPrice, setLessonPrice] = useState<number>(defaultLesson.price)
     const [lessonImage, setLessonImage] = useState<string|undefined>(defaultLesson.imageUrl)
+    const [selectedCategory, setSelectedCategoryy] = useState<"misc"|"cooking"|"code"|"fitness"|"science"|"art">("misc")
 
     useEffect(()=>{
         console.log(lessonTitle, lessonDescription, lessonPrice, lessonImage)
@@ -68,7 +117,15 @@ export default function NewLesson(){
                     <Input value={lessonTitle} placeholder="Give a title to your lesson" label="Lesson Title" onChange={(e)=>{setLessonTitle(e.target.value)}} />
                     <Input value={lessonDescription} type="textarea" placeholder="Describe your lesson in about 50 words." label="Lesson Description" onChange={(e)=>{setLessonDescription(e.target.value)}} />
                     <Input value={lessonPrice} type="number" placeholder="21000" label="Your Price (in sats)" onChange={(e)=>{setLessonPrice(parseInt(e.target.value))}} />
-                    <Input value={lessonImage} label="Lesson Image (optional)" onChange={(e)=>{setLessonImage(e.target.value)}} />
+                    
+                    <h3>Category</h3>
+
+                    <div className="flex flex-row flex-wrap lg:flex-row gap-4 items-center rounded-xl">
+                        {categories.map((category, i)=>{
+                            return <Category image={category.image} name={category.name} selected={selectedCategory === category.slug} onClick={()=>{setSelectedCategoryy(category.slug); setLessonImage('https://mentors.atlbitlab.com/lesson-cat-' + category.slug + '.jpg' );}} />
+                        })}
+                    </div>
+
                     <Input type="submit" value="Post Lesson" />
                 </form>
             </>

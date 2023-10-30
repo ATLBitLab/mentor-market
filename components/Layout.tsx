@@ -53,10 +53,6 @@ export default function Layout(props:LayoutProps){
         {
             name: "Create Lesson",
             href: "/lesson/new"
-        },
-        {
-            name: "Messages",
-            href: "/messages"
         }
     ]
 
