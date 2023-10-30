@@ -13,7 +13,7 @@ const [profile, setProfile] = useState<Object|null>(null)
 
     return(
         <>
-            Conversation with {profile && profile.name ? profile.name :  <span>Nostr Rando</span>}
+            {/* Conversation with {profile && profile.name ? profile.name :  <span>Nostr Rando</span>} */}
         </>
     )
 }
