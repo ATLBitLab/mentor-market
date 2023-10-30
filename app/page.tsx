@@ -61,7 +61,7 @@ export default function Home() {
           <p><em>Popular mentors will go here</em></p> */}
           
           <h2 className="text-pink-600">Available Lessons</h2>
-          <div className="w-full md:grid md:grid-cols-2 gap-4">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
             {!lessons.length ?
               <>
                 <LessonCard className="col-span-1 w-full" />
