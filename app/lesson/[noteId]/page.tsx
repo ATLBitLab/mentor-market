@@ -5,6 +5,8 @@ import { extractLessonFromEvent, extractProfileFromEvent } from "@/lib/nostr"
 import { LightningIcon } from "@bitcoin-design/bitcoin-icons-react/filled"
 import { GlobeAltIcon } from '@heroicons/react/24/solid'
 import Button from "@/components/Button"
+import { nip19 } from "nostr-tools"
+import { useRouter } from "next/navigation"
 
 export default function LessonPage({params}: {params: {noteId: string}}){
     const [isClient, setIsClient] = useState(false)
@@ -12,6 +14,12 @@ export default function LessonPage({params}: {params: {noteId: string}}){
     const [lesson, setLesson] = useState<any>(null)
     const [instructorEvent, setInstructorEvent] = useState<any>(null)
     const [instructor, setInstructor] = useState<any>(null)
+
+    const router = useRouter()
+
+    function routeTo(id:string|undefined){
+        if(id) router.push('/lesson/' + id)
+    }
 
     useEffect(() => {
         setIsClient(true)
@@ -72,6 +80,10 @@ export default function LessonPage({params}: {params: {noteId: string}}){
 
     function dmInstructor(){
         console.log('dm instructor')
+        let npub = nip19.npubEncode(instructorEvent.pubkey)
+        let dmAddr = 'https://primal.net/messages/' + npub
+        console.log(dmAddr)
+        if(window) window.open(dmAddr, '_blank')
     }
 
     if(lesson) {
