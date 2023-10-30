@@ -18,6 +18,7 @@ export default function Home() {
     if(!lessons.length) {
       initRelay('wss://nostr.mentors.atlbitlab.com').then((relay) => {
         console.log('connected to relay')
+        if(!relay) return null
         // Create event, send, and subscribe to see it
         let sub = relay.sub([
           {
