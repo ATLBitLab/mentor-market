@@ -18,6 +18,7 @@ export default function Home() {
     setIsClient(true)
     initRelay('wss://nostr.mentors.atlbitlab.com').then((relay) => {
       if(relay){
+        console.log('connected to relay')
         // Create event, send, and subscribe to see it
         let sub = relay.sub([
           {

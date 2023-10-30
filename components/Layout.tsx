@@ -142,7 +142,7 @@ export default function Layout(props:LayoutProps){
                         </div>
                     </nav>
                 </header>
-                <main className="p-4">
+                <main className="p-4 max-w-3xl mx-auto">
                     {props.children}
                 </main>
                 <div className={"bg-gray-900/50 w-full h-full absolute top-0 left-0 z-40" + (!menuOpen && " hidden")} onClick={()=>{setMenuOpen(false)}}></div>

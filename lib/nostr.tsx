@@ -1,5 +1,6 @@
 import { relayInit, getBlankEvent, finishEvent } from "nostr-tools";
 import type { Relay, Event, EventTemplate, UnsignedEvent } from "nostr-tools";
+import type { Lesson } from "@/types/lesson";
 
 export async function initRelay(relayUri:string):Promise<Relay|null>{
     console.log('Initializing relay...')
@@ -43,4 +44,26 @@ export function createUnsignedEvent(content: string, kind:number = 1, tags:any[]
   eventTemp.created_at = created_at
   if(tags) eventTemp.tags = tags
   return eventTemp;
+}
+
+export function extractLessonFromEvent(event:Event):Lesson|null{
+  try{
+    let lesson = JSON.parse(event.content)
+    return lesson
+  }
+  catch(e){
+    console.error('Error: ', e)
+    return null
+  }
+}
+
+export function extractProfileFromEvent(event:Event):Object|null{
+  try{
+    let profile = JSON.parse(event.content)
+    return profile
+  }
+  catch(e){
+    console.error('Error: ', e)
+    return null
+  }
 }

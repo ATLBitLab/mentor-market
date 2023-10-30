@@ -19,7 +19,7 @@ export default function LessonCard(props:LessonCardProps){
     if(props.lesson) {
         return(
             <article className="w-full p-4 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 hover:cursor-pointer rounded-md flex flex-col gap-4 items-start text-left" onClick={()=>routeToLesson(props.id)}>
-                <img src={props.lesson.imageUrl} alt={props.lesson.title} className="w-16 h-16 rounded-full border border-gray-200" />
+                <img src={props.lesson.imageUrl} alt={props.lesson.title} className="w-16 h-16 rounded-lg border border-gray-200" />
                 <h3>{props.lesson.title}</h3>
                 <p className="text-xl">{props.lesson.price} <span className="text-lg">sats</span></p>
                 <p>
