@@ -61,25 +61,27 @@ export default function Home() {
           <p><em>Popular mentors will go here</em></p> */}
           
           <h2 className="text-pink-600">Available Lessons</h2>
-          {!lessons.length ?
-            <>
-              <LessonCard />
-              <LessonCard />
-              <LessonCard />
-              <LessonCard />
-            </>
-          :
-            lessons.map((event, i) => {
-              try{
-                let lesson = JSON.parse(event.content)
-                return <LessonCard key={i} lesson={lesson} id={event.id} />
-              }
-              catch(e){
-                console.error('Error: ', e)
-                return null
-              }
-            })
-          }
+          <div className="w-full md:grid md:grid-cols-2 gap-4">
+            {!lessons.length ?
+              <>
+                <LessonCard className="col-span-1 w-full" />
+                <LessonCard className="col-span-1" />
+                <LessonCard className="col-span-1" />
+                <LessonCard className="col-span-1" />
+              </>
+            :
+              lessons.map((event, i) => {
+                try{
+                  let lesson = JSON.parse(event.content)
+                  return <LessonCard key={i} lesson={lesson} id={event.id} className="col-span-1" />
+                }
+                catch(e){
+                  console.error('Error: ', e)
+                  return null
+                }
+              })
+            }
+          </div>
         </div>
       </div>
       
