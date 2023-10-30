@@ -137,14 +137,14 @@ export default function NewLesson(){
             <>
                 <h1>Lesson posted!</h1>
 
-                <div>
+                <div className="p-4 flex flex-col gap-4 border border-gray-200 rounded-lg mb-4">
+                    <img src={content.imageUrl} alt="" className="w-64 h-64 rounded-lg" />
+
                     <h2>{content.title}</h2>
 
                     <p>{content.price} sats</p>
 
                     <p>{content.description}</p>
-
-                    <img src={content.imageUrl} alt="" />
                 </div>
                 
                 <Button onClick={()=>{setPublishedLesson(null)}}>Post Another Lesson</Button>
