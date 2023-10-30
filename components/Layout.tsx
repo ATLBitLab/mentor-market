@@ -57,6 +57,7 @@ export default function Layout(props:LayoutProps){
     ]
 
     useEffect(() => {
+        console.log('Layout useEffect')
         setIsClient(true);
     }, [])
 

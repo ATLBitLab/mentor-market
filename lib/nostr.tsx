@@ -46,13 +46,13 @@ export function createUnsignedEvent(content: string, kind:number = 1, tags:any[]
   return eventTemp;
 }
 
-export function extractLessonFromEvent(event:Event):Lesson|null{
+export function extractLessonFromEvent(event:Event, includeRawEvent:boolean = false):Lesson|null{
   try{
     let lesson = JSON.parse(event.content)
     return lesson
   }
   catch(e){
-    console.error('Error: ', e)
+    // console.error('Error: ', e)
     return null
   }
 }

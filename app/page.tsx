@@ -3,7 +3,7 @@ import Image from "next/image"
 import mentorMarketIcon from "../public/mentor-market-icon.jpg"
 import Button from "@/components/Button"
 import { useUserDataStore } from "@/components/Layout"
-import { initRelay } from "@/lib/nostr"
+import { initRelay, extractLessonFromEvent } from "@/lib/nostr"
 import LessonCard from "@/components/LessonCard"
 import { useEffect, useState } from "react"
 
@@ -11,13 +11,12 @@ export default function Home() {
   const userDataStore = useUserDataStore()
   const [isClient, setIsClient] = useState(false)
   const [lessons, setLessons] = useState<any[]>([])
-  const [popularMentors, setPopularMentors] = useState<any[]>([])
-  const [popularLessons, setPopularLessons] = useState<any[]>([])
 
   useEffect(() => {
+    console.log('useEffect')
     setIsClient(true)
-    initRelay('wss://nostr.mentors.atlbitlab.com').then((relay) => {
-      if(relay){
+    if(!lessons.length) {
+      initRelay('wss://nostr.mentors.atlbitlab.com').then((relay) => {
         console.log('connected to relay')
         // Create event, send, and subscribe to see it
         let sub = relay.sub([
@@ -27,11 +26,21 @@ export default function Home() {
         ])
 
         sub.on('event', event => {
-            console.log('got event:', event)
-            setLessons((lessons) => [...lessons, event])
+            setLessons((prevLessons) => {
+              if (prevLessons.some(lesson => lesson.id === event.id)) {
+                  console.log('already have ', event.id);
+                  return prevLessons;
+              }
+              return [...prevLessons, event];
+          });
         })
-      }
-    })
+        
+        sub.on('eose', () => {
+          console.log('unsubscribing from relay')
+          sub.unsub()
+        })
+      })
+    }
   }, [])
 
   return (
@@ -51,14 +60,6 @@ export default function Home() {
           :
             <Button>Login Here</Button>
           }
-
-          {/* <h2 className="text-pink-600">Popular Lessons</h2>
-
-          <p><em>Popular lessons will go here</em></p>
-
-          <h2 className="text-pink-600">Popular Mentors</h2>
-
-          <p><em>Popular mentors will go here</em></p> */}
           
           <h2 className="text-pink-600">Available Lessons</h2>
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -71,14 +72,9 @@ export default function Home() {
               </>
             :
               lessons.map((event, i) => {
-                try{
-                  let lesson = JSON.parse(event.content)
-                  return <LessonCard key={i} lesson={lesson} id={event.id} className="col-span-1" />
-                }
-                catch(e){
-                  console.error('Error: ', e)
-                  return null
-                }
+                let lesson = extractLessonFromEvent(event)
+                if(lesson) return <LessonCard key={i} lesson={lesson} id={event.id} className="col-span-1" />
+                else return null
               })
             }
           </div>
