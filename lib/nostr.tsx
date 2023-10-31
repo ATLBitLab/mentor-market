@@ -1,6 +1,7 @@
 import { relayInit, getBlankEvent, finishEvent } from "nostr-tools";
 import type { Relay, Event, EventTemplate, UnsignedEvent } from "nostr-tools";
 import type { Lesson } from "@/types/lesson";
+import { useUserDataStore } from "@/components/Layout";
 
 export async function initRelay(relayUri:string):Promise<Relay|null>{
     console.log('Initializing relay...')
@@ -90,4 +91,39 @@ export async function getInstructor(pubkey:string):Promise<Object>{
       }
   })
   return profile
+}
+
+export function loginWithNip7(){
+  const userDataStore = useUserDataStore()
+  if(window && (window as any).nostr) {
+      (window as any).nostr.getPublicKey().then((pubKey:string)=>{
+          userDataStore.setNpub(pubKey)
+
+          let relay = initRelay('wss://relay.damus.io').then((relay)=>{
+              console.log(relay)
+              // Get profile data
+          if(relay){
+              console.log('fetching from relay')
+              let sub = relay.sub([
+              {
+                  kinds: [0],
+                  authors: [pubKey],
+              },
+              ])
+      
+              sub.on('event', event => {
+                  console.log('got event:', event)
+                  let profile = JSON.parse(event.content)
+                  console.log(profile)
+                  userDataStore.setName(profile.name)
+                  userDataStore.setAvatar(profile.picture)
+              })
+          }
+          else {console.log('relay not found')}
+
+          })
+          
+          
+      })
+  }
 }

@@ -29,7 +29,7 @@ export default function Input(props: InputProps){
                 <input
                     type="submit"
                     value={props.value}
-                    className="bg-yellow-300 p-2 rounded-md"
+                    className="bg-yellow-300 p-2 rounded-md cursor-pointer"
                 />
             </div>
         )

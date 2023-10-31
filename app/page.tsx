@@ -11,6 +11,39 @@ export default function Home() {
   const userDataStore = useUserDataStore()
   const [isClient, setIsClient] = useState(false)
   const [lessons, setLessons] = useState<any[]>([])
+  
+
+  function loginWithNip7(){
+    if(window && (window as any).nostr) {
+        (window as any).nostr.getPublicKey().then((pubKey:string)=>{
+            userDataStore.setNpub(pubKey)
+  
+            let relay = initRelay('wss://relay.damus.io').then((relay)=>{
+                console.log(relay)
+                // Get profile data
+            if(relay){
+                console.log('fetching from relay')
+                let sub = relay.sub([
+                {
+                    kinds: [0],
+                    authors: [pubKey],
+                },
+                ])
+        
+                sub.on('event', event => {
+                    console.log('got event:', event)
+                    let profile = JSON.parse(event.content)
+                    console.log(profile)
+                    userDataStore.setName(profile.name)
+                    userDataStore.setAvatar(profile.picture)
+                })
+            }
+            else {console.log('relay not found')}
+  
+            })
+        })
+    }
+  }
 
   useEffect(() => {
     console.log('useEffect')
@@ -59,8 +92,12 @@ export default function Home() {
           {isClient && userDataStore.npub ?
             <p className="text-center text-xl font-semibold text-purple-700">Welcome back, {userDataStore.name}</p>
           :
-            <Button>Login Here</Button>
+            <Button onClick={loginWithNip7}>Login Here</Button>
           }
+
+          <p className="max-w-md">
+            <small><a href="https://nostr.mentors.atlbitlab.com" className="underline" target="_blank">Join the Mentor Market relay</a> for only 21 sats in order to post lessons here</small>
+          </p>
           
           <h2 className="text-pink-600">Available Lessons</h2>
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">

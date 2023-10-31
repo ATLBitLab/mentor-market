@@ -126,6 +126,10 @@ export default function NewLesson(){
                         })}
                     </div>
 
+                    <p className="max-w-md">
+                        <small><a href="https://nostr.mentors.atlbitlab.com" className="underline" target="_blank">Join the Mentor Market relay</a> for only 21 sats in order to post lessons here</small>
+                    </p>
+
                     <Input type="submit" value="Post Lesson" />
                 </form>
             </>
